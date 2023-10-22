@@ -33,7 +33,8 @@
 
 ## ERD
 
-![Appointment.png](..%2FAppointment.png)
+![Appointment](https://github.com/KimMunjin/appointment/assets/115455126/3608caa7-9770-493f-a165-7f2f193b437c)
+
 
 ## 사용 기술
 <div align=center>
