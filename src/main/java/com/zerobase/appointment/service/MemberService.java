@@ -23,8 +23,9 @@ public class MemberService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    return this.memberRepository.findByEmail(email)
+    Member member = this.memberRepository.findByEmail(email)
         .orElseThrow(() -> new UsernameNotFoundException("찾을 수 없는 이메일 입니다." + email));
+    return MemberDTO.fromEntity(member);
   }
 
   public Member registerNewMember(MemberDTO member) {
