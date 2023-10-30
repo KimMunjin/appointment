@@ -29,8 +29,7 @@ public class MemberService implements UserDetailsService {
   }
 
   public Member registerNewMember(MemberDTO member) {
-    boolean existEmail = this.memberRepository.existsByEmail(member.getEmail());
-    if (existEmail) {
+    if (this.memberRepository.existsByEmail(member.getEmail())) {
       throw new RuntimeException("사용할 수 없는 이메일입니다.");
     }
     boolean existNickname = this.memberRepository.existsByNickname((member.getNickname()));
@@ -45,7 +44,7 @@ public class MemberService implements UserDetailsService {
 
   public Member authenticate(LoginRequest loginRequest) {
     Member member = this.memberRepository.findByEmail(loginRequest.getEmail())
-        .orElseThrow(() -> new RuntimeException("이메일과 비밀번호를 확인해주세요"));
+        .orElseThrow(() -> new RuntimeException("이메일을 확인해주세요"));
 
     if (!this.passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
       throw new RuntimeException("이메일과 비밀번호를 확인해주세요");

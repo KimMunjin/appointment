@@ -37,6 +37,4 @@ public class SecurityConfig {
     return (web -> web.ignoring()
         .antMatchers("/swagger-ui/**"));
   }
-
-
 }

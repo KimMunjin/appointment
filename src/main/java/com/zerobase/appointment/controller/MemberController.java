@@ -5,7 +5,8 @@ import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.entity.Member;
 import com.zerobase.appointment.security.TokenProvider;
 import com.zerobase.appointment.service.MemberService;
-import lombok.AllArgsConstructor;
+import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,14 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MemberController {
 
-  private MemberService memberService;
-  private TokenProvider tokenProvider;
+  private final MemberService memberService;
+  private final TokenProvider tokenProvider;
 
   @PostMapping("/signup")
-  public ResponseEntity<String> signUp(@RequestBody MemberDTO memberDTO) {
+  public ResponseEntity<String> signUp(@RequestBody @Valid MemberDTO memberDTO) {
     try {
       memberService.registerNewMember(memberDTO);
       return new ResponseEntity<>("회원 가입 성공", HttpStatus.OK);
@@ -30,7 +31,7 @@ public class MemberController {
   }
 
   @PostMapping("/signin")
-  public ResponseEntity<?> signIn(@RequestBody LoginRequest loginRequest) {
+  public ResponseEntity<?> signIn(@RequestBody @Valid LoginRequest loginRequest) {
     Member member = this.memberService.authenticate(loginRequest);
     String token = this.tokenProvider.generateToken(member.getEmail(), member.getRole());
     return ResponseEntity.ok(token);

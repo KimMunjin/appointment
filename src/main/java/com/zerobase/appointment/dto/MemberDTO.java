@@ -1,11 +1,13 @@
 package com.zerobase.appointment.dto;
 
+import com.zerobase.appointment.annotation.Email;
 import com.zerobase.appointment.entity.Member;
 import com.zerobase.appointment.type.Role;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import javax.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,8 +24,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 public class MemberDTO implements UserDetails {
   private Long id;
+  @NotBlank(message = "이메일은 필수 입력 사항입니다.")
+  @Email(message = "유효한 이메일 주소를 입력하세요.")
   private String email;
+  @NotBlank(message = "비밀번호는 필수 입력 사항입니다.")
   private String password;
+  @NotBlank(message = "닉네임은 필수 입력 사항입니다.")
   private String nickname;
   private LocalDateTime joinDate;
   private LocalDateTime updateDate;
