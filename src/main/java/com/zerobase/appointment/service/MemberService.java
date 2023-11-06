@@ -1,6 +1,6 @@
 package com.zerobase.appointment.service;
 
-import com.zerobase.appointment.dto.LoginRequest;
+import com.zerobase.appointment.dto.EmailPassword;
 import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.entity.Member;
 import com.zerobase.appointment.exception.AppointmentException;
@@ -53,7 +53,12 @@ public class MemberService implements UserDetailsService {
     return savedMember;
   }
 
-  public void resendVerificationEmail(String email) {
+  public void resendVerificationEmail(EmailPassword emailPassword) {
+    Member member = checkEmailPassword(emailPassword);
+    if (member.isVerified()) {
+      throw new AppointmentException(ErrorCode.ALREADY_VERIFIED);
+    }
+    String email = emailPassword.getEmail();
     if (redisRepository.hasKey(email)) {
       if (!isAuthCodeExpired(email)) {
         throw new AppointmentException(ErrorCode.EXISTS_AUTHCODE);
@@ -90,15 +95,19 @@ public class MemberService implements UserDetailsService {
     return authCode;
   }
 
-  public Member authenticate(LoginRequest loginRequest) {
-    Member member = this.memberRepository.findByEmail(loginRequest.getEmail())
-        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
-    if (!this.passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
-      throw new AppointmentException(ErrorCode.INVALID_EMAIL_PASSWORD);
-    }
+  public Member authenticate(EmailPassword emailPassword) {
+    Member member = checkEmailPassword(emailPassword);
     if (!member.isVerified()) {
-      resendVerificationEmail(loginRequest.getEmail());
       throw new AppointmentException(ErrorCode.UNVERIFIED_EMAIL);
+    }
+    return member;
+  }
+
+  public Member checkEmailPassword(EmailPassword emailPassword) {
+    Member member = this.memberRepository.findByEmail(emailPassword.getEmail())
+        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
+    if (!this.passwordEncoder.matches(emailPassword.getPassword(), member.getPassword())) {
+      throw new AppointmentException(ErrorCode.INVALID_EMAIL_PASSWORD);
     }
     return member;
   }

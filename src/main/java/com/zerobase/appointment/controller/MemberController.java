@@ -1,6 +1,6 @@
 package com.zerobase.appointment.controller;
 
-import com.zerobase.appointment.dto.LoginRequest;
+import com.zerobase.appointment.dto.EmailPassword;
 import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.entity.Member;
 import com.zerobase.appointment.security.TokenProvider;
@@ -28,8 +28,8 @@ public class MemberController {
   }
 
   @PostMapping("/signin")
-  public ResponseEntity<?> signIn(@RequestBody @Valid LoginRequest loginRequest) {
-    Member member = this.memberService.authenticate(loginRequest);
+  public ResponseEntity<?> signIn(@RequestBody @Valid EmailPassword emailPassword) {
+    Member member = this.memberService.authenticate(emailPassword);
     String token = this.tokenProvider.generateToken(member.getEmail(), member.getRole());
     return ResponseEntity.ok(token);
   }
@@ -39,5 +39,11 @@ public class MemberController {
       @RequestParam("authCode") String authCode) {
     memberService.confirmEmail(email, authCode);
     return ResponseEntity.ok("이메일이 확인되었습니다.");
+  }
+
+  @PostMapping("/resend")
+  public ResponseEntity<String> resendEmail(@RequestBody @Valid EmailPassword emailPassword) {
+    memberService.resendVerificationEmail(emailPassword);
+    return ResponseEntity.ok("인증 메일을 재발송했습니다.");
   }
 }

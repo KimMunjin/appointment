@@ -17,7 +17,8 @@ public enum ErrorCode {
   AUTHCODE_NOT_FOUND("인증 코드가 만료되었거나 존재하지 않습니다.", HttpStatus.NOT_FOUND),
   UNVERIFIED_EMAIL("이메일 인증이 완료되지 않았습니다.", HttpStatus.UNAUTHORIZED),
   UNAVAILABLE_EMAIL("사용할 수 없는 이메일입니다.", HttpStatus.BAD_REQUEST),
-  UNAVAILABLE_NICKNAME("사용할 수 없는 닉네임입니다.", HttpStatus.BAD_REQUEST);
+  UNAVAILABLE_NICKNAME("사용할 수 없는 닉네임입니다.", HttpStatus.BAD_REQUEST),
+  ALREADY_VERIFIED("이미 인증이 완료되었습니다.", HttpStatus.BAD_REQUEST);
 
   private final String description;
   private final HttpStatus httpStatus;
