@@ -3,27 +3,28 @@ package com.zerobase.appointment.service;
 import com.zerobase.appointment.dto.LoginRequest;
 import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.entity.Member;
+import com.zerobase.appointment.exception.AppointmentException;
 import com.zerobase.appointment.repository.MemberRepository;
-import com.zerobase.appointment.repository.RedisDao;
+import com.zerobase.appointment.repository.RedisRepository;
+import com.zerobase.appointment.type.ErrorCode;
 import com.zerobase.appointment.type.Role;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class MemberService implements UserDetailsService {
 
   private final EmailService emailService;
   private final PasswordEncoder passwordEncoder;
   private final MemberRepository memberRepository;
-  private final RedisDao redisDao;
+  private final RedisRepository redisRepository;
 
   @Override
   public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -32,53 +33,40 @@ public class MemberService implements UserDetailsService {
     return MemberDTO.fromEntity(member);
   }
 
+  @Transactional
   public Member registerNewMember(MemberDTO member) {
 
     String email = member.getEmail();
-    if (redisDao.hasKey(email)) {
-      resendVerificationEmail(email);
-      return null;
-    } else {
-      if (this.memberRepository.existsByEmail(email)) {
-        throw new RuntimeException("사용할 수 없는 이메일입니다.");
-      }
-      if (this.memberRepository.existsByNickname(member.getNickname())) {
-        throw new RuntimeException("사용할 수 없는 닉네임입니다.");
-      }
-      member.setPassword(this.passwordEncoder.encode(member.getPassword()));
-      member.setRole(Role.MEMBER);
-      String authCode = generateAuthCode();
-      member.setVerified(false);
-      Member savedMember = memberRepository.save(member.toEntity());
-      redisDao.saveAuthCode(email, authCode);
-      emailService.sendVerificationEmail(email, authCode);
-
-      return savedMember;
+    if (this.memberRepository.existsByEmail(email)) {
+      throw new AppointmentException(ErrorCode.UNAVAILABLE_EMAIL);
     }
+    if (this.memberRepository.existsByNickname(member.getNickname())) {
+      throw new AppointmentException(ErrorCode.UNAVAILABLE_NICKNAME);
+    }
+    member.setPassword(this.passwordEncoder.encode(member.getPassword()));
+    member.setRole(Role.MEMBER);
+    String authCode = generateAuthCode(email);
+    member.setVerified(false);
+    Member savedMember = memberRepository.save(member.toEntity());
+    emailService.sendVerificationEmail(email, authCode);
+
+    return savedMember;
   }
 
   public void resendVerificationEmail(String email) {
-    if (redisDao.hasKey(email)) {
-      if (isAuthCodeExpired(email)) {
-        String newAuthCode = generateAuthCode();
-        redisDao.saveAuthCode(email, newAuthCode);
-        emailService.sendVerificationEmail(email, newAuthCode);
-      } else {
-        throw new RuntimeException("유효한 인증 코드가 이미 존재합니다.");
+    if (redisRepository.hasKey(email)) {
+      if (!isAuthCodeExpired(email)) {
+        throw new AppointmentException(ErrorCode.EXISTS_AUTHCODE);
       }
-    } else {
-      String authCode = generateAuthCode();
-      redisDao.saveAuthCode(email, authCode);
-      emailService.sendVerificationEmail(email, authCode);
     }
-
+    String authCode = generateAuthCode(email);
+    emailService.sendVerificationEmail(email, authCode);
   }
 
   private boolean isAuthCodeExpired(String email) {
     long currentTimeMillis = System.currentTimeMillis();
-    long expirationTimeMillis = redisDao.getExpirationTimeMillis(email);
+    long expirationTimeMillis = redisRepository.getExpirationTimeMillis(email);
     if (currentTimeMillis > expirationTimeMillis) {
-      redisDao.removeAuthCode(email);
       return true;
     } else {
       return false;
@@ -87,28 +75,30 @@ public class MemberService implements UserDetailsService {
 
   public void confirmEmail(String email, String authCode) {
     Member member = this.memberRepository.findByEmail(email)
-        .orElseThrow(() -> new RuntimeException("이메일을 확인해주세요"));
-    if (!authCode.equals(redisDao.getAuthCode(email))) {
-      throw new RuntimeException("유효하지 않은 확인 코드입니다.");
+        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
+    if (!authCode.equals(redisRepository.getAuthCode(email))) {
+      throw new AppointmentException(ErrorCode.INVALID_AUTHCODE);
     }
     member.setVerified(true);
-    redisDao.removeAuthCode(email);
+    redisRepository.removeAuthCode(email);
     memberRepository.save(member);
   }
 
-  private String generateAuthCode() {
-    return UUID.randomUUID().toString();
+  private String generateAuthCode(String email) {
+    String authCode = UUID.randomUUID().toString();
+    redisRepository.saveAuthCode(email, authCode);
+    return authCode;
   }
 
   public Member authenticate(LoginRequest loginRequest) {
     Member member = this.memberRepository.findByEmail(loginRequest.getEmail())
-        .orElseThrow(() -> new RuntimeException("이메일을 확인해주세요"));
+        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
     if (!this.passwordEncoder.matches(loginRequest.getPassword(), member.getPassword())) {
-      throw new RuntimeException("이메일과 비밀번호를 확인해주세요");
+      throw new AppointmentException(ErrorCode.INVALID_EMAIL_PASSWORD);
     }
     if (!member.isVerified()) {
       resendVerificationEmail(loginRequest.getEmail());
-      throw new RuntimeException("이메일 확인이 완료되지 않았습니다.");
+      throw new AppointmentException(ErrorCode.UNVERIFIED_EMAIL);
     }
     return member;
   }
