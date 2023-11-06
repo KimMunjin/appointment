@@ -34,7 +34,7 @@ public class MemberService implements UserDetailsService {
   }
 
   @Transactional
-  public Member registerNewMember(MemberDTO member) {
+  public void registerNewMember(MemberDTO member) {
 
     String email = member.getEmail();
     if (this.memberRepository.existsByEmail(email)) {
@@ -47,10 +47,8 @@ public class MemberService implements UserDetailsService {
     member.setRole(Role.MEMBER);
     String authCode = generateAuthCode(email);
     member.setVerified(false);
-    Member savedMember = memberRepository.save(member.toEntity());
+    memberRepository.save(member.toEntity());
     emailService.sendVerificationEmail(email, authCode);
-
-    return savedMember;
   }
 
   public void resendVerificationEmail(EmailPassword emailPassword) {
