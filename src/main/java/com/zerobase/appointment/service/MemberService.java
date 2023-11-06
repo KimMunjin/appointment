@@ -73,9 +73,8 @@ public class MemberService implements UserDetailsService {
     long expirationTimeMillis = redisRepository.getExpirationTimeMillis(email);
     if (currentTimeMillis > expirationTimeMillis) {
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   public void confirmEmail(String email, String authCode) {
