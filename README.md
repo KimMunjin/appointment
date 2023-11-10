@@ -16,9 +16,9 @@
   - 회원 검색
     - 가입 시 입력한 이메일로 친구 신청할 회원을 검색합니다.
   - 친구 신청
-    - 친구 신청 상태 : 요청, 수락, 거절
+    - 친구 신청 상태 : 요청, 친구
     - 친구 신청 시 '요청' 상태로 됩니다.
-    - 요청 상대의 수락이 필요합니다. 수락하면 상태 '수락'으로 변경됩니다.
+    - 요청 상대의 수락이 필요합니다. 수락하면 상태 '친구'로 변경됩니다.
   - 친구 목록
     - 해당 회원과 친구인 목록과 친구 신청이 들어온 목록을 출력합니다.
     - 목록에서 들어온 친구 신청에 대한 결정이 가능합니다.
@@ -61,7 +61,8 @@
 <div align=center>
 <img src="https://img.shields.io/badge/java-007396?style=for-the-badge&logo=java&logoColor=white">
 <img src="https://img.shields.io/badge/mariaDB-003545?style=for-the-badge&logo=mariaDB&logoColor=white"> 
-<img src="https://img.shields.io/badge/spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white">
+<img src="https://img.shields.io/badge/spring boot-6DB33F?style=for-the-badge&logo=Spring Boot&logoColor=white">
 <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
+<img src="https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white">
 </div>
 
