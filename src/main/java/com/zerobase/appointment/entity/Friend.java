@@ -28,11 +28,11 @@ public class Friend {
   private Long id;
 
   @ManyToOne
-  @JoinColumn(name = "request_member_id", referencedColumnName="id")
+  @JoinColumn(name = "request_member_id")
   private Member requestMember;
 
   @ManyToOne
-  @JoinColumn(name = "be_requested_member_id", referencedColumnName = "id")
+  @JoinColumn(name = "be_requested_member_id")
   private Member beRequestedMember;
 
   @Enumerated(EnumType.STRING)
