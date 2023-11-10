@@ -12,12 +12,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AppointmentException extends RuntimeException {
+public class MemberException extends RuntimeException {
 
   private ErrorCode errorCode;
   private String errorMessage;
 
-  public AppointmentException(ErrorCode errorCode) {
+  public MemberException(ErrorCode errorCode) {
     this.errorCode = errorCode;
     this.errorMessage = errorCode.getDescription();
   }

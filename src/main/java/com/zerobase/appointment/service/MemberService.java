@@ -3,7 +3,7 @@ package com.zerobase.appointment.service;
 import com.zerobase.appointment.dto.EmailPassword;
 import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.entity.Member;
-import com.zerobase.appointment.exception.AppointmentException;
+import com.zerobase.appointment.exception.MemberException;
 import com.zerobase.appointment.repository.MemberRepository;
 import com.zerobase.appointment.repository.RedisRepository;
 import com.zerobase.appointment.type.ErrorCode;
@@ -38,10 +38,10 @@ public class MemberService implements UserDetailsService {
 
     String email = member.getEmail();
     if (this.memberRepository.existsByEmail(email)) {
-      throw new AppointmentException(ErrorCode.UNAVAILABLE_EMAIL);
+      throw new MemberException(ErrorCode.UNAVAILABLE_EMAIL);
     }
     if (this.memberRepository.existsByNickname(member.getNickname())) {
-      throw new AppointmentException(ErrorCode.UNAVAILABLE_NICKNAME);
+      throw new MemberException(ErrorCode.UNAVAILABLE_NICKNAME);
     }
     member.setPassword(this.passwordEncoder.encode(member.getPassword()));
     member.setRole(Role.MEMBER);
@@ -54,12 +54,12 @@ public class MemberService implements UserDetailsService {
   public void resendVerificationEmail(EmailPassword emailPassword) {
     Member member = checkEmailPassword(emailPassword);
     if (member.isVerified()) {
-      throw new AppointmentException(ErrorCode.ALREADY_VERIFIED);
+      throw new MemberException(ErrorCode.ALREADY_VERIFIED);
     }
     String email = emailPassword.getEmail();
     if (redisRepository.hasKey(email)) {
       if (!isAuthCodeExpired(email)) {
-        throw new AppointmentException(ErrorCode.EXISTS_AUTHCODE);
+        throw new MemberException(ErrorCode.EXISTS_AUTHCODE);
       }
     }
     String authCode = generateAuthCode(email);
@@ -77,9 +77,9 @@ public class MemberService implements UserDetailsService {
 
   public void confirmEmail(String email, String authCode) {
     Member member = this.memberRepository.findByEmail(email)
-        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
+        .orElseThrow(() -> new MemberException(ErrorCode.EMAIL_NOT_FOUND));
     if (!authCode.equals(redisRepository.getAuthCode(email))) {
-      throw new AppointmentException(ErrorCode.INVALID_AUTHCODE);
+      throw new MemberException(ErrorCode.INVALID_AUTHCODE);
     }
     member.setVerified(true);
     redisRepository.removeAuthCode(email);
@@ -95,17 +95,22 @@ public class MemberService implements UserDetailsService {
   public Member authenticate(EmailPassword emailPassword) {
     Member member = checkEmailPassword(emailPassword);
     if (!member.isVerified()) {
-      throw new AppointmentException(ErrorCode.UNVERIFIED_EMAIL);
+      throw new MemberException(ErrorCode.UNVERIFIED_EMAIL);
     }
     return member;
   }
 
   public Member checkEmailPassword(EmailPassword emailPassword) {
     Member member = this.memberRepository.findByEmail(emailPassword.getEmail())
-        .orElseThrow(() -> new AppointmentException(ErrorCode.EMAIL_NOT_FOUND));
+        .orElseThrow(() -> new MemberException(ErrorCode.EMAIL_NOT_FOUND));
     if (!this.passwordEncoder.matches(emailPassword.getPassword(), member.getPassword())) {
-      throw new AppointmentException(ErrorCode.INVALID_EMAIL_PASSWORD);
+      throw new MemberException(ErrorCode.INVALID_EMAIL_PASSWORD);
     }
     return member;
+  }
+
+  public Member findMemberById(Long memberId) {
+    return memberRepository.findById(memberId)
+        .orElseThrow(() -> new MemberException(ErrorCode.USER_NOT_FOUND));
   }
 }

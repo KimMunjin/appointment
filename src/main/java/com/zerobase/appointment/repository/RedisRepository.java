@@ -1,6 +1,6 @@
 package com.zerobase.appointment.repository;
 
-import com.zerobase.appointment.exception.AppointmentException;
+import com.zerobase.appointment.exception.MemberException;
 import com.zerobase.appointment.type.ErrorCode;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +47,7 @@ public class RedisRepository {
     String key = createAuthKey(email);
     Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
     if (ttl == 0 || ttl < 0) {
-      throw new AppointmentException(ErrorCode.AUTHCODE_NOT_FOUND);
+      throw new MemberException(ErrorCode.AUTHCODE_NOT_FOUND);
     }
     long currentTimeMillis = System.currentTimeMillis();
     long expirationTimeMillis = currentTimeMillis + TimeUnit.SECONDS.toMillis(ttl);

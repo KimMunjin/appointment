@@ -10,8 +10,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-  @ExceptionHandler(AppointmentException.class)
-  public ResponseEntity<ErrorResponse> handleAppointmentException(AppointmentException e) {
+  @ExceptionHandler(MemberException.class)
+  public ResponseEntity<ErrorResponse> handleAppointmentException(MemberException e) {
+    //로그 작성할 것 log.error("{} is occurred", e.getErrorCode());
+    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getErrorMessage());
+    return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
+  }
+
+  @ExceptionHandler(FriendException.class)
+  public ResponseEntity<ErrorResponse> handleAppointmentException(FriendException e) {
     //로그 작성할 것 log.error("{} is occurred", e.getErrorCode());
     ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getErrorMessage());
     return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
