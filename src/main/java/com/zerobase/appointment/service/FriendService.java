@@ -29,7 +29,7 @@ public class FriendService {
   }
 
   // 친구 신청
-  public Friend createFriendship(Long requestMemberId, Long beRequestedMemberId) {
+  public void createFriendship(Long requestMemberId, Long beRequestedMemberId) {
     Member requestMember = memberService.findMemberById(requestMemberId);
     Member beRequestedMember = memberService.findMemberById(beRequestedMemberId);
 
@@ -41,7 +41,7 @@ public class FriendService {
         .beRequestedMember(beRequestedMember)
         .status(FriendStatus.REQUEST_SENT)
         .build();
-    return friendRepository.save(friendRequest);
+    friendRepository.save(friendRequest);
   }
 
   // 친구 관계인지 확인 메서드
@@ -73,7 +73,7 @@ public class FriendService {
   }
 
   // 친구 신청 수락
-  public Friend acceptFriendRequest(Long memberId, Long friendshipId) {
+  public void acceptFriendRequest(Long memberId, Long friendshipId) {
     Member owner = memberService.findMemberById(memberId);
     System.out.println(owner.getEmail());
     Friend friendRequest = friendRepository.findById(friendshipId)
@@ -83,7 +83,7 @@ public class FriendService {
                 && request.getStatus() == FriendStatus.REQUEST_SENT)
         .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
     friendRequest.setStatus(FriendStatus.FRIEND);
-    return friendRepository.save(friendRequest);
+    friendRepository.save(friendRequest);
   }
 
   // 친구 신청 거절
