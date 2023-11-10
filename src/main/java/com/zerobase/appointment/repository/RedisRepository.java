@@ -46,7 +46,7 @@ public class RedisRepository {
   public long getExpirationTimeMillis(String email) {
     String key = createAuthKey(email);
     Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
-    if (ttl==null||ttl == 0 || ttl < 0) {
+    if (ttl==null|| ttl <= 0) {
       throw new MemberException(ErrorCode.AUTHCODE_NOT_FOUND);
     }
     long currentTimeMillis = System.currentTimeMillis();

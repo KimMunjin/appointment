@@ -1,5 +1,6 @@
 package com.zerobase.appointment.dto;
 
+import com.zerobase.appointment.entity.Friend;
 import com.zerobase.appointment.entity.Member;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,15 @@ public class MemberResultDTO {
         .id(member.getId())
         .email(member.getEmail())
         .nickname(member.getNickname())
+        .build();
+  }
+
+  //Friend에서 친구 신청한 Member의 정보를 MemberResultDTO로 변환
+  public static MemberResultDTO fromFriendEntity(Friend friend) {
+    return MemberResultDTO.builder()
+        .id(friend.getRequestMember().getId())
+        .email(friend.getRequestMember().getEmail())
+        .nickname(friend.getRequestMember().getNickname())
         .build();
   }
 

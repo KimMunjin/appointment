@@ -33,7 +33,7 @@ public class FriendService {
     Member requestMember = memberService.findMemberById(requestMemberId);
     Member beRequestedMember = memberService.findMemberById(beRequestedMemberId);
 
-    if (areFriends(requestMember, beRequestedMember)) {
+    if (existFriendsData(requestMember, beRequestedMember)) {
       throw new FriendException(ErrorCode.EXISTS_FRIENDSHIP);
     }
     Friend friendRequest = Friend.builder()
@@ -44,8 +44,8 @@ public class FriendService {
     friendRepository.save(friendRequest);
   }
 
-  // 친구 관계인지 확인 메서드
-  private boolean areFriends(Member requestMember, Member beRequestedMember) {
+  // 친구 테이블에 데이터가 있는지(친구 신청이 있었거나 혹은 친구 사이인지) 확인하는 메서드
+  private boolean existFriendsData(Member requestMember, Member beRequestedMember) {
     return
         friendRepository.existsByRequestMemberAndBeRequestedMember(requestMember, beRequestedMember)
             || friendRepository.existsByRequestMemberAndBeRequestedMember(beRequestedMember,
@@ -54,19 +54,12 @@ public class FriendService {
 
   // 나에게 들어온 친구 신청 목록 조회
   public List<MemberResultDTO> getFriendRequests(Long memberId) {
-    List<Friend> friendRequests = friendRepository.findByBeRequestedMemberIdAndStatus(memberId,
+    List<Friend> friendRequests = friendRepository.findAllByBeRequestedMemberIdAndStatus(memberId,
         FriendStatus.REQUEST_SENT);
-    if (friendRequests.isEmpty()) {
-      throw new FriendException(ErrorCode.LIST_EMPTY);
-    }
 
     // Friend 엔티티를 MemberResultDTO로 변환
     List<MemberResultDTO> friendRequestDTOs = friendRequests.stream()
-        .map(friend -> MemberResultDTO.builder()
-            .id(friend.getRequestMember().getId())
-            .email(friend.getRequestMember().getEmail())
-            .nickname(friend.getRequestMember().getNickname())
-            .build())
+        .map(MemberResultDTO::fromFriendEntity)
         .collect(Collectors.toList());
 
     return friendRequestDTOs;
@@ -74,28 +67,16 @@ public class FriendService {
 
   // 친구 신청 수락
   public void acceptFriendRequest(Long memberId, Long friendshipId) {
-    Member owner = memberService.findMemberById(memberId);
-    System.out.println(owner.getEmail());
-    Friend friendRequest = friendRepository.findById(friendshipId)
-        .filter(request ->
-            (request.getRequestMember().equals(owner) || request.getBeRequestedMember()
-                .equals(owner))
-                && request.getStatus() == FriendStatus.REQUEST_SENT)
-        .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
+    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(friendshipId, memberId)
+            .orElseThrow(()->new FriendException(ErrorCode.INVALID_REQUEST));
     friendRequest.setStatus(FriendStatus.FRIEND);
     friendRepository.save(friendRequest);
   }
 
   // 친구 신청 거절
-  public void rejectFriendRequest(Long memberId, Long friendRequestId) {
-    Member owner = memberService.findMemberById(memberId);
-
-    Friend friendRequest = friendRepository.findById(friendRequestId)
-        .filter(request ->
-            (request.getRequestMember().equals(owner) || request.getBeRequestedMember()
-                .equals(owner))
-                && request.getStatus() == FriendStatus.REQUEST_SENT)
-        .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
+  public void rejectFriendRequest(Long memberId, Long friendshipId) {
+    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(friendshipId, memberId)
+        .orElseThrow(()->new FriendException(ErrorCode.INVALID_REQUEST));
 
     friendRepository.delete(friendRequest);
   }
@@ -104,11 +85,8 @@ public class FriendService {
   public List<MemberResultDTO> getFriendsList(Long memberId) {
     Member member = memberService.findMemberById(memberId);
 
-    List<Friend> friendsList = friendRepository.findByRequestMemberAndStatusOrBeRequestedMemberAndStatus(
+    List<Friend> friendsList = friendRepository.findAllByRequestMemberAndStatusOrBeRequestedMemberAndStatus(
         member, FriendStatus.FRIEND, member, FriendStatus.FRIEND);
-    if (friendsList.isEmpty()) {
-      throw new FriendException(ErrorCode.LIST_EMPTY);
-    }
     return friendsList.stream()
         .map(request -> {
           if (request.getRequestMember().equals(member)) {

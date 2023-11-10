@@ -6,14 +6,16 @@ import com.zerobase.appointment.type.FriendStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface FriendRepository extends JpaRepository<Friend, Long> {
 
   boolean existsByRequestMemberAndBeRequestedMember(Member requestMember, Member beRequestedMember);
 
-  List<Friend> findByBeRequestedMemberIdAndStatus(Long beRequestedMemberId, FriendStatus status);
+  List<Friend> findAllByBeRequestedMemberIdAndStatus(Long beRequestedMemberId, FriendStatus status);
 
-  List<Friend> findByRequestMemberAndStatusOrBeRequestedMemberAndStatus(
+  List<Friend> findAllByRequestMemberAndStatusOrBeRequestedMemberAndStatus(
       Member requestMember, FriendStatus requestMemberStatus, Member beRequestedMember,
       FriendStatus beRequestedMemberStatus
   );
@@ -21,4 +23,11 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
   Optional<Friend> findByRequestMemberAndBeRequestedMemberOrRequestMemberAndBeRequestedMember(
       Member requestMember, Member beRequestedMember, Member requestMember2,
       Member beRequestedMember2);
+
+  @Query("SELECT f from Friend f "+
+      "where f.id = :friendshipId "+
+      "and f.beRequestedMember.id = :beRequestedMemberId "+
+      "and f.status = 'REQUEST_SENT'")
+  Optional<Friend> findFriendRequestByIdAndBeRequestedMemberId(@Param("friendshipId") Long friendshipId,
+      @Param("beRequestedMemberId")Long beRequestedMemberId);
 }
