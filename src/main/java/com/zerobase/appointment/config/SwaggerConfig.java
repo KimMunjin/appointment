@@ -16,10 +16,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 public class SwaggerConfig {
     @Bean
     public Docket api(){
-        String title = "약속 기능 구현 프로젝트";
-        String description ="약속 기능에 필요한 API를 구현한다.";
-        String version = "1.0";
-
         return new Docket(DocumentationType.SWAGGER_2)
                 .ignoredParameterTypes(AuthenticationPrincipal.class)
                 .select()
