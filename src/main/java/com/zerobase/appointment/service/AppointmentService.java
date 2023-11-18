@@ -157,7 +157,6 @@ public class AppointmentService {
   }
 
   // 모든 멤버들이 동의했는지 여부 체크
-  @Transactional
   public boolean allMembersConsented(Appointment appointment) {
     return appointment.getAppointmentDetails().stream().allMatch(AppointmentDetail::isConsented);
   }
@@ -169,13 +168,11 @@ public class AppointmentService {
       if (appointment.getAppointmentDetails().stream()
           .noneMatch(detail -> detail.getId() == null)) {
         appointment.setAppointmentStatus(AppointmentStatus.CONFIRMED);
-        appointmentRepository.save(appointment);
       }
     }
   }
 
   // 모든 멤버 동의 시 약속 상태 CANCELLED 변경
-  @Transactional
   public void updateStatusCancelledIfAllConsented(Appointment appointment) {
     if (allMembersConsented(appointment)) {
       appointment.setAppointmentStatus(AppointmentStatus.CANCELLED);
