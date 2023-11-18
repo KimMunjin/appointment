@@ -36,4 +36,12 @@ public class MemberResultDTO {
         .build();
   }
 
+  public static MemberResultDTO fromMemberEntity(Member member) {
+    return MemberResultDTO.builder()
+        .id(member.getId())
+        .email(member.getEmail())
+        .nickname(member.getNickname())
+        .build();
+  }
+
 }

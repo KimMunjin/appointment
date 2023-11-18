@@ -24,6 +24,13 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
   }
 
+  @ExceptionHandler(AppointmentException.class)
+  public ResponseEntity<ErrorResponse> handleAppointmentException(AppointmentException e) {
+    //로그 작성할 것 log.error("{} is occurred", e.getErrorCode());
+    ErrorResponse errorResponse = new ErrorResponse(e.getErrorCode(), e.getErrorMessage());
+    return new ResponseEntity<>(errorResponse, e.getErrorCode().getHttpStatus());
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
       MethodArgumentNotValidException e) {
