@@ -5,7 +5,6 @@ import com.zerobase.appointment.dto.AppointmentResultDTO;
 import com.zerobase.appointment.dto.MemberDTO;
 import com.zerobase.appointment.dto.UpdateAppointmentDTO;
 import com.zerobase.appointment.entity.Appointment;
-import com.zerobase.appointment.entity.AppointmentResult;
 import com.zerobase.appointment.service.AppointmentService;
 import com.zerobase.appointment.type.AppointmentStatus;
 import io.swagger.annotations.ApiOperation;
