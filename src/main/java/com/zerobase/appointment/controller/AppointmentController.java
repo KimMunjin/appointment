@@ -66,9 +66,10 @@ public class AppointmentController {
   @ApiOperation("상태별 약속 리스트 불러오기")
   @GetMapping("/list/{status}")
   @PreAuthorize("hasRole('MEMBER')")
-  public List<AppointmentDTO> getAllAppointments(@AuthenticationPrincipal MemberDTO owner,
+  public ResponseEntity<List<AppointmentDTO>> getAllAppointments(@AuthenticationPrincipal MemberDTO owner,
       @PathVariable AppointmentStatus status) {
-    return appointmentService.getAppointmentsByStatus(owner.getId(), status);
+    List<AppointmentDTO> appointments = appointmentService.getAppointmentsByStatus(owner.getId(), status);
+    return ResponseEntity.ok(appointments);
   }
 
   // 약속 파토 신청
