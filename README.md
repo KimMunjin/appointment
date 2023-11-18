@@ -51,7 +51,9 @@
 
 ## ERD
 
-![Appointment](C:\Users\Kim Munjin\Desktop\Appointment 11월 18일.png)
+![Appointment11월18일](https://github.com/KimMunjin/appointment/assets/115455126/7bb5cc8f-a2d1-4969-b5c0-bc524ff871c1)
+
+
 
 
 
