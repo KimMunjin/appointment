@@ -24,7 +24,7 @@ public enum ErrorCode {
   // Friend 에러 코드
   EXISTS_FRIENDSHIP("이미 친구입니다.", HttpStatus.BAD_REQUEST),
   LIST_EMPTY("불러올 리스트가 없습니다.", HttpStatus.BAD_REQUEST),
-  NOT_OWNER_FRIEND("친구 관계가 아입니다", HttpStatus.BAD_REQUEST),
+  NOT_OWNER_FRIEND("친구 관계가 아닙니다.", HttpStatus.BAD_REQUEST),
 
   // Appointment 에러 코드
   APPOINTMENT_NOT_FOUND("약속을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
@@ -37,7 +37,12 @@ public enum ErrorCode {
   APPOINTMENT_DATE_NOT_PASSED("약속 날짜 이전입니다.", HttpStatus.BAD_REQUEST),
   APPOINTMENT_DATE_PASSED("현재보다 이전의 약속을 설정할 수 없습니다.", HttpStatus.BAD_REQUEST),
   INVALID_APPOINTMENT_STATUS("변경할 수 있는 약속 상태가 아닙니다.", HttpStatus.BAD_REQUEST),
-  APPOINTMENT_RESULT_NOT_FOUND("약속 결과를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
+  APPOINTMENT_RESULT_NOT_FOUND("약속 결과를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+  INVALID_REVIEW_STATUS("리뷰를 쓸 수 없는 약속 상태입니다.", HttpStatus.BAD_REQUEST),
+  CANNOT_WRITE_REVIEW("리뷰를 쓸 수 없는 사용자입니다.", HttpStatus.BAD_REQUEST),
+  REVIEW_NOT_FOUND("리뷰를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+  CANNOT_UPDATE_REVIEW("리뷰를 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
+  CANNOT_DELETE_REVIEW("리뷰를 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
 
   private final String description;
   private final HttpStatus httpStatus;
