@@ -8,6 +8,7 @@ import com.zerobase.appointment.exception.FriendException;
 import com.zerobase.appointment.exception.MemberException;
 import com.zerobase.appointment.repository.FriendRepository;
 import com.zerobase.appointment.repository.MemberRepository;
+import com.zerobase.appointment.type.AlarmType;
 import com.zerobase.appointment.type.ErrorCode;
 import com.zerobase.appointment.type.FriendStatus;
 import java.util.List;
@@ -22,6 +23,7 @@ public class FriendService {
   private final MemberRepository memberRepository;
   private final FriendRepository friendRepository;
   private final MemberService memberService;
+  private final NotificationService notificationService;
 
   // 이메일로 회원 검색
   public Member findMemberByEmail(String email) {
@@ -43,6 +45,8 @@ public class FriendService {
         .status(FriendStatus.REQUEST_SENT)
         .build();
     friendRepository.save(friendRequest);
+
+    notificationService.sendNotification(beRequestedMember.getId(), friendRequest.getId(), AlarmType.FRIEND_REQUEST_ACCEPTED);
   }
 
   // 친구 테이블에 데이터가 있는지(친구 신청이 있었거나 혹은 친구 사이인지) 확인하는 메서드
