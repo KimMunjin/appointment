@@ -8,6 +8,7 @@ import com.zerobase.appointment.repository.MemberRepository;
 import com.zerobase.appointment.repository.RedisRepository;
 import com.zerobase.appointment.type.ErrorCode;
 import com.zerobase.appointment.type.Role;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -46,9 +47,10 @@ public class MemberService implements UserDetailsService {
     member.setPassword(this.passwordEncoder.encode(member.getPassword()));
     member.setRole(Role.MEMBER);
     String authCode = generateAuthCode(email);
-    member.setVerified(false);
+    //member.setVerified(false); 마무리 시 주석 풀기
+    member.setVerified(true);//테스트 편의성을 위해서 임시로...
     memberRepository.save(member.toEntity());
-    emailService.sendVerificationEmail(email, authCode);
+//    emailService.sendVerificationEmail(email, authCode); 이것도 마무리 시 주석 풀기
   }
 
   public void resendVerificationEmail(EmailPassword emailPassword) {
@@ -112,5 +114,9 @@ public class MemberService implements UserDetailsService {
   public Member findMemberById(Long memberId) {
     return memberRepository.findById(memberId)
         .orElseThrow(() -> new MemberException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  public List<Member> findListByIds(List<Long> ids) {
+    return memberRepository.findAllById(ids);
   }
 }

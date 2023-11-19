@@ -3,6 +3,7 @@ package com.zerobase.appointment.service;
 import com.zerobase.appointment.dto.MemberResultDTO;
 import com.zerobase.appointment.entity.Friend;
 import com.zerobase.appointment.entity.Member;
+import com.zerobase.appointment.exception.AppointmentException;
 import com.zerobase.appointment.exception.FriendException;
 import com.zerobase.appointment.exception.MemberException;
 import com.zerobase.appointment.repository.FriendRepository;
@@ -67,16 +68,18 @@ public class FriendService {
 
   // 친구 신청 수락
   public void acceptFriendRequest(Long memberId, Long friendshipId) {
-    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(friendshipId, memberId)
-            .orElseThrow(()->new FriendException(ErrorCode.INVALID_REQUEST));
+    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(
+            friendshipId, memberId)
+        .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
     friendRequest.setStatus(FriendStatus.FRIEND);
     friendRepository.save(friendRequest);
   }
 
   // 친구 신청 거절
   public void rejectFriendRequest(Long memberId, Long friendshipId) {
-    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(friendshipId, memberId)
-        .orElseThrow(()->new FriendException(ErrorCode.INVALID_REQUEST));
+    Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(
+            friendshipId, memberId)
+        .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
 
     friendRepository.delete(friendRequest);
   }
@@ -109,4 +112,20 @@ public class FriendService {
 
     friendRepository.delete(friendRequest);
   }
+
+  // 친구 여부 확인 메서드
+  public void validateOwnerFriends(Member owner, List<Member> invitedFriends) {
+    List<MemberResultDTO> ownerFriends = getFriendsList(owner.getId());
+    List<Long> ownerFriendIds = ownerFriends.stream()
+        .map(MemberResultDTO::getId)
+        .collect(Collectors.toList());
+
+    for (Member invitedFriend : invitedFriends) {
+      if (!ownerFriendIds.contains(invitedFriend.getId())) {
+        throw new AppointmentException(ErrorCode.NOT_OWNER_FRIEND);
+      }
+    }
+  }
+
+
 }

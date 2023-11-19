@@ -23,7 +23,21 @@ public enum ErrorCode {
   USER_NOT_FOUND("회원을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
   // Friend 에러 코드
   EXISTS_FRIENDSHIP("이미 친구입니다.", HttpStatus.BAD_REQUEST),
-  LIST_EMPTY("불러올 리스트가 없습니다.", HttpStatus.BAD_REQUEST);
+  LIST_EMPTY("불러올 리스트가 없습니다.", HttpStatus.BAD_REQUEST),
+  NOT_OWNER_FRIEND("친구 관계가 아입니다", HttpStatus.BAD_REQUEST),
+
+  // Appointment 에러 코드
+  APPOINTMENT_NOT_FOUND("약속을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENTDETAIL_NOT_FOUND("약속상세내용을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
+  ALREADY_CONSENTED("이미 동의된 약속입니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_NOT_UNCONFIRMED("약속이 미확정 상태가 아닙니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_MAKER_NO_CONSENT_NEEDED("동의가 필요하지 않은 회원입니다.", HttpStatus.BAD_REQUEST),
+  NOT_APPOINTMENT_MAKER("약속을 변경할 권한이 없습니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_ALREADY_CANCELLED("약속이 이미 취소되었습니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_DATE_NOT_PASSED("약속 날짜 이전입니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_DATE_PASSED("현재보다 이전의 약속을 설정할 수 없습니다.", HttpStatus.BAD_REQUEST),
+  INVALID_APPOINTMENT_STATUS("변경할 수 있는 약속 상태가 아닙니다.", HttpStatus.BAD_REQUEST),
+  APPOINTMENT_RESULT_NOT_FOUND("약속 결과를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
 
   private final String description;
   private final HttpStatus httpStatus;
