@@ -11,9 +11,11 @@ import com.zerobase.appointment.exception.AppointmentException;
 import com.zerobase.appointment.repository.AppointmentDetailRepository;
 import com.zerobase.appointment.repository.AppointmentRepository;
 import com.zerobase.appointment.repository.AppointmentResultRepository;
+import com.zerobase.appointment.type.AlarmType;
 import com.zerobase.appointment.type.AppointmentStatus;
 import com.zerobase.appointment.type.ErrorCode;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +36,7 @@ public class AppointmentService {
   private final FriendService friendService;
   private final AppointmentDetailRepository appointmentDetailRepository;
   private final AppointmentResultRepository appointmentResultRepository;
+  private final NotificationService notificationService;
 
   // 약속 생성
   public void createAppointment(AppointmentDTO appointmentDTO) {
@@ -51,6 +54,15 @@ public class AppointmentService {
     Appointment appointment = AppointmentDTO.toEntityForConfirm(appointmentDTO, owner,
         invitedFriends);
     appointmentRepository.save(appointment);
+
+    List<Long> invitedFriendIds = invitedFriends.stream()
+        .map(Member::getId)
+        .collect(Collectors.toList());
+
+    for (Long invitedFriendId : invitedFriendIds) {
+      notificationService.sendNotification(invitedFriendId, appointment.getId(),
+          AlarmType.APPOINTMENT_CONFIRMED);
+    }
   }
 
   //약속 확정 동의
@@ -119,6 +131,11 @@ public class AppointmentService {
     }
     // 동의 내역 초기화
     resetConsentStatus(appointment);
+
+    for (AppointmentDetail appointmentDetail : appointment.getAppointmentDetails()) {
+      notificationService.sendNotification(appointmentDetail.getInvitedMember().getId(), appointment.getId(),
+          AlarmType.APPOINTMENT_CANCELED);
+    }
   }
 
   //동의 내역 초기화 메서드
@@ -216,6 +233,11 @@ public class AppointmentService {
     appointment.setAppointmentStatus(AppointmentStatus.UNCONFIRMED);
     // 변경된 약속 저장
     appointmentRepository.save(appointment);
+
+    for (AppointmentDetail appointmentDetail : appointment.getAppointmentDetails()) {
+      notificationService.sendNotification(appointmentDetail.getInvitedMember().getId(), appointment.getId(),
+          AlarmType.APPOINTMENT_CHANGED);
+    }
   }
 
   // 약속 날짜 이후 약속 상태 '이행', '부분이행', '파토' 변경
@@ -284,6 +306,41 @@ public class AppointmentService {
         // 약속 날짜 이후 일주일이 지나면 'CANCELLED' 상태로 변경
         appointment.setAppointmentStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
+      }
+    }
+  }
+  // 약속 하루 전 알림
+  @Scheduled(cron = "0 0 0 * * ?")
+  public void sendAppointmentNotificationOneDayBefore() {
+    LocalDateTime oneDayBefore = LocalDateTime.now().plusDays(1);
+
+    List<Appointment> confirmedAppointments = appointmentRepository.findByAppointmentDateBeforeAndAppointmentStatus(oneDayBefore, AppointmentStatus.CONFIRMED);
+
+    for (Appointment appointment : confirmedAppointments) {
+      List<Long> memberIds = appointmentDetailRepository.findMemberIdsByAppointment(appointment);
+      memberIds.add(appointment.getAppointmentMaker().getId());
+      for (Long memberId : memberIds) {
+        notificationService.sendNotification(memberId, appointment.getId(), AlarmType.APPOINTMENT_NOTI);
+      }
+    }
+  }
+  // 약속 3일 후 약속 결과 설정 요청 알림
+  @Scheduled(cron = "0 0 0 * * ?")
+  public void sendAttendanceConfirmationNotificationThreeDaysAfter() {
+    LocalDateTime today = LocalDateTime.now();
+    LocalDateTime DaysBefore = today.minusDays(3);
+    LocalDateTime DaysAfter = today.minusDays(2);
+
+    List<Appointment> confirmedAppointments = appointmentRepository.findAllByAppointmentDateBetweenAndAppointmentStatus(
+        DaysBefore.toLocalDate().atStartOfDay(),
+        DaysAfter.toLocalDate().atTime(LocalTime.MAX),
+        AppointmentStatus.CONFIRMED);
+
+    for (Appointment appointment : confirmedAppointments) {
+      List<Long> memberIds = appointmentDetailRepository.findMemberIdsByAppointment(appointment);
+      memberIds.add(appointment.getAppointmentMaker().getId());
+      for (Long memberId : memberIds) {
+        notificationService.sendNotification(memberId, appointment.getId(), AlarmType.APPOINTMENT_REQUEST_STATUS_RESULT);
       }
     }
   }

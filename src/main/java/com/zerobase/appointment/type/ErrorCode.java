@@ -42,7 +42,8 @@ public enum ErrorCode {
   CANNOT_WRITE_REVIEW("리뷰를 쓸 수 없는 사용자입니다.", HttpStatus.BAD_REQUEST),
   REVIEW_NOT_FOUND("리뷰를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
   CANNOT_UPDATE_REVIEW("리뷰를 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
-  CANNOT_DELETE_REVIEW("리뷰를 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
+  CANNOT_DELETE_REVIEW("리뷰를 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
+  NOTIFICATION_NOT_FOUND("알림을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
 
   private final String description;
   private final HttpStatus httpStatus;
