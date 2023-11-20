@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
+@Slf4j
 public class AppointmentService {
 
   private final AppointmentRepository appointmentRepository;
@@ -43,6 +45,7 @@ public class AppointmentService {
     // 현재보다 이전으로 약속을 설정할 수 없음
     LocalDateTime now = LocalDateTime.now();
     if (now.isAfter(appointmentDTO.getAppointmentDate())) {
+      log.error(appointmentDTO.getAppointmentMakerId()+"회원의 약속 날짜 설정 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_DATE_PASSED);
     }
     Member owner = memberService.findMemberById(appointmentDTO.getAppointmentMakerId());
@@ -54,6 +57,7 @@ public class AppointmentService {
     Appointment appointment = AppointmentDTO.toEntityForConfirm(appointmentDTO, owner,
         invitedFriends);
     appointmentRepository.save(appointment);
+    log.info(appointment.getId()+": appointment save");
 
     List<Long> invitedFriendIds = invitedFriends.stream()
         .map(Member::getId)
@@ -62,6 +66,7 @@ public class AppointmentService {
     for (Long invitedFriendId : invitedFriendIds) {
       notificationService.sendNotification(invitedFriendId, appointment.getId(),
           AlarmType.APPOINTMENT_CONFIRMED);
+      log.info(invitedFriendId+"회원에게 알림 발생");
     }
   }
 
@@ -73,24 +78,29 @@ public class AppointmentService {
         .orElseThrow(() -> new AppointmentException(ErrorCode.APPOINTMENTDETAIL_NOT_FOUND));
     // 동의되지 않은 상태여야 동의할 수 있음
     if (appointmentDetail.getConsentTime() != null) {
+      log.error(appointmentId+"약속에 대한"+memberId+"회원의 약속 동의 상태 에러");
       throw new AppointmentException(ErrorCode.ALREADY_CONSENTED);
     }
 
     Appointment appointment = appointmentDetail.getAppointment();
     // UNCONFIRMED 상태여야 약속 확정을 동의할 수 있음
     if (appointment.getAppointmentStatus() != AppointmentStatus.UNCONFIRMED) {
+      log.error(memberId+"회원의 동의 과정 중"+appointmentId+"약속에 대한 약속 상태 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_NOT_UNCONFIRMED);
     }
     // 약속을 생성한 사람이 아니어야 동의할 수 있음
     if (appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원은 "+appointmentId+"약속에 대한 동의 권한 없음");
       throw new AppointmentException(ErrorCode.APPOINTMENT_MAKER_NO_CONSENT_NEEDED);
     }
 
     appointmentDetail.setConsentTime(LocalDateTime.now());
     appointmentDetailRepository.save(appointmentDetail);
+    log.info(appointmentDetail.getId()+": appointmentDetail save");
 
     updateStatusConfirmedIfAllConsented(appointment);
     appointmentRepository.save(appointment);
+    log.info(appointment.getId()+": appointment save");
   }
 
   //약속 거절 - 삭제
@@ -100,13 +110,16 @@ public class AppointmentService {
         .findByAppointmentIdAndInvitedMemberId(appointmentId, memberId)
         .orElseThrow(() -> new AppointmentException(ErrorCode.APPOINTMENTDETAIL_NOT_FOUND));
     if (appointmentDetail.getConsentTime() != null) {
+      log.error(appointmentId+"약속에 대한"+memberId+"회원의 약속 동의 상태 에러");
       throw new AppointmentException(ErrorCode.ALREADY_CONSENTED);
     }
     Appointment appointment = appointmentDetail.getAppointment();
     if (appointment.getAppointmentStatus() != AppointmentStatus.UNCONFIRMED) {
+      log.error(memberId+"회원의 동의 과정 중"+appointmentId+"약속에 대한 약속 상태 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_NOT_UNCONFIRMED);
     }
     if (appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원은"+appointmentId+"약속에 대한 동의 권한 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_MAKER_NO_CONSENT_NEEDED);
     }
     appointmentDetailRepository.delete(appointmentDetail);
@@ -123,10 +136,12 @@ public class AppointmentService {
 
     // 약속을 만든 사람만이 파투를 요청할 수 있음
     if (!appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원 "+appointmentId+"약속 파투 신청 권한 에러");
       throw new AppointmentException(ErrorCode.NOT_APPOINTMENT_MAKER);
     }
     // 이미 취소된 약속인 경우 예외 처리
     if (appointment.getAppointmentStatus() == AppointmentStatus.CANCELLED) {
+      log.error(memberId+"회원 "+appointmentId+"약속 파투 신청 상태 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_ALREADY_CANCELLED);
     }
     // 동의 내역 초기화
@@ -156,6 +171,7 @@ public class AppointmentService {
 
     // 동의되지 않은 상태여야 동의할 수 있음
     if (appointmentDetail.getConsentTime() != null) {
+      log.error(appointmentId+"약속에 대한"+memberId+"회원의 약속 동의 상태 에러");
       throw new AppointmentException(ErrorCode.ALREADY_CONSENTED);
     }
 
@@ -163,14 +179,17 @@ public class AppointmentService {
 
     // 약속을 생성한 사람이 아니어야 동의할 수 있음
     if (appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원은"+appointmentId+"약속에 대한 동의 권한 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_MAKER_NO_CONSENT_NEEDED);
     }
 
     appointmentDetail.setConsentTime(LocalDateTime.now());
     appointmentDetailRepository.save(appointmentDetail);
+    log.info(appointmentDetail.getId()+": appointmentDetail save");
 
     updateStatusCancelledIfAllConsented(appointment);
     appointmentRepository.save(appointment);
+    log.info(appointment.getId()+": appointment save");
   }
 
   // 모든 멤버들이 동의했는지 여부 체크
@@ -215,11 +234,13 @@ public class AppointmentService {
 
     // 약속을 만든 사람만 변경 가능
     if (!appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원 "+appointment.getId()+"약속 변경 신청 권한 에러");
       throw new AppointmentException(ErrorCode.NOT_APPOINTMENT_MAKER);
     }
     // 현재보다 이전으로 약속을 설정할 수 없음
     LocalDateTime now = LocalDateTime.now();
     if (now.isAfter(updateAppointmentDTO.getAppointmentDate())) {
+      log.error(appointment.getAppointmentMaker().getId()+"회원의 약속 날짜 설정 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_DATE_PASSED);
     }
     // 약속 내용 업데이트
@@ -233,26 +254,31 @@ public class AppointmentService {
     appointment.setAppointmentStatus(AppointmentStatus.UNCONFIRMED);
     // 변경된 약속 저장
     appointmentRepository.save(appointment);
+    log.info(appointment.getId()+": appointment save");
 
     for (AppointmentDetail appointmentDetail : appointment.getAppointmentDetails()) {
       notificationService.sendNotification(appointmentDetail.getInvitedMember().getId(), appointment.getId(),
           AlarmType.APPOINTMENT_CHANGED);
+      log.info(appointmentDetail.getInvitedMember().getId()+"회원에게 알림 발생");
     }
   }
 
-  // 약속 날짜 이후 약속 상태 '이행', '부분이행', '파토' 변경
+  // 약속 날짜 이후 약속 상태 '이행', '부분이행', '파투' 변경
   public void changeAppointmentResult(Long appointmentId, Appointment newStatus, Long memberId) {
     Appointment appointment = appointmentRepository.findById(appointmentId)
         .orElseThrow(() -> new AppointmentException(ErrorCode.APPOINTMENT_NOT_FOUND));
 
     if (!appointment.getAppointmentMaker().getId().equals(memberId)) {
+      log.error(memberId+"회원 "+appointment.getId()+"약속 상태 변경 신청 권한 에러");
       throw new AppointmentException(ErrorCode.NOT_APPOINTMENT_MAKER);
     }
     if (!isValidStatusForChange(newStatus.getAppointmentStatus())) {
+      log.error(appointment.getId()+"약속 신청 권한 에러");
       throw new AppointmentException(ErrorCode.INVALID_APPOINTMENT_STATUS);
     }
     LocalDateTime now = LocalDateTime.now();
     if (now.isBefore(appointment.getAppointmentDate())) {
+      log.error(appointment.getAppointmentMaker().getId()+"회원의 상태 변경 날짜 에러");
       throw new AppointmentException(ErrorCode.APPOINTMENT_DATE_NOT_PASSED);
     }
     // 약속 상태 변경 로직
@@ -308,6 +334,7 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
       }
     }
+    log.info("checkAndAutoCancelAppointments 메서드 실행");
   }
   // 약속 하루 전 알림
   @Scheduled(cron = "0 0 0 * * ?")
@@ -321,8 +348,10 @@ public class AppointmentService {
       memberIds.add(appointment.getAppointmentMaker().getId());
       for (Long memberId : memberIds) {
         notificationService.sendNotification(memberId, appointment.getId(), AlarmType.APPOINTMENT_NOTI);
+        log.info(memberId+"회원에게 알림 발생");
       }
     }
+    log.info("sendAppointmentNotificationOneDayBefore 메서드 실행");
   }
   // 약속 3일 후 약속 결과 설정 요청 알림
   @Scheduled(cron = "0 0 0 * * ?")
@@ -341,8 +370,10 @@ public class AppointmentService {
       memberIds.add(appointment.getAppointmentMaker().getId());
       for (Long memberId : memberIds) {
         notificationService.sendNotification(memberId, appointment.getId(), AlarmType.APPOINTMENT_REQUEST_STATUS_RESULT);
+        log.info(memberId+"회원에게 알림 발생");
       }
     }
+    log.info("sendAttendanceConfirmationNotificationThreeDaysAfter 메서드 실행");
   }
 
 

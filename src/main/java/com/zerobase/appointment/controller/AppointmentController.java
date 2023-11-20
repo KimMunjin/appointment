@@ -10,6 +10,7 @@ import com.zerobase.appointment.type.AppointmentStatus;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/appointment")
+@Slf4j
 public class AppointmentController {
 
   private final AppointmentService appointmentService;
@@ -35,8 +37,8 @@ public class AppointmentController {
   public ResponseEntity<String> createAppointment(@AuthenticationPrincipal MemberDTO owner,
       @RequestBody AppointmentDTO appointmentDTO) {
     appointmentDTO.setAppointmentMakerId(owner.getId());
-
     appointmentService.createAppointment(appointmentDTO);
+    log.info(owner.getId()+" : 약속 생성");
     return ResponseEntity.ok("약속이 성공적으로 생성되었습니다.");
   }
 
@@ -48,6 +50,7 @@ public class AppointmentController {
       @PathVariable Long appointmentId,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.consentToAppointmentConfirmed(appointmentId, owner.getId());
+    log.info(appointmentId+" 약속에 대한 "+owner.getId()+"회원의 확정 동의");
     return ResponseEntity.ok("약속 확정에 동의했습니다.");
   }
 
@@ -59,6 +62,7 @@ public class AppointmentController {
       @PathVariable Long appointmentId,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.rejectToAppointment(appointmentId, owner.getId());
+    log.info(owner.getId()+"회원이"+appointmentId+" 약속을 거절");
     return ResponseEntity.ok("약속을 거절했습니다.");
   }
 
@@ -69,6 +73,7 @@ public class AppointmentController {
   public ResponseEntity<List<AppointmentDTO>> getAllAppointments(@AuthenticationPrincipal MemberDTO owner,
       @PathVariable AppointmentStatus status) {
     List<AppointmentDTO> appointments = appointmentService.getAppointmentsByStatus(owner.getId(), status);
+    log.info(owner.getId()+"회원의"+status+"상태의 약속 리스트 출력");
     return ResponseEntity.ok(appointments);
   }
 
@@ -79,6 +84,7 @@ public class AppointmentController {
   public ResponseEntity<String> initiateCancellation(@PathVariable Long appointmentId,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.requestCancellation(appointmentId, owner.getId());
+    log.info(owner.getId()+"회원이 "+appointmentId+"약속을 파토 신청하였습니다.");
     return ResponseEntity.ok("약속 파토 신청이 완료되었습니다.");
   }
 
@@ -90,6 +96,7 @@ public class AppointmentController {
       @PathVariable Long appointmentId,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.consentToAppointmentCancelled(appointmentId, owner.getId());
+    log.info(owner.getId()+"회원이"+appointmentId+"약속에 대한 파토 신청에 동의했습니다.");
     return ResponseEntity.ok("약속 파토에 동의했습니다.");
   }
 
@@ -101,6 +108,7 @@ public class AppointmentController {
       @RequestBody UpdateAppointmentDTO updateAppointmentDTO,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.updateAppointment(updateAppointmentDTO, owner.getId());
+    log.info(owner.getId()+"회원이 "+updateAppointmentDTO.getId()+"에 대한 약속 변경을 신청했습니다.");
     return ResponseEntity.ok("약속 변경 신청이 완료되었습니다.");
   }
 
@@ -113,6 +121,7 @@ public class AppointmentController {
       @RequestBody Appointment newStatus,
       @AuthenticationPrincipal MemberDTO owner) {
     appointmentService.changeAppointmentResult(appointmentId, newStatus, owner.getId());
+    log.info(appointmentId+"에 대한 약속 상태 변경");
     return ResponseEntity.ok("약속 상태를 변경했습니다.");
   }
 
@@ -125,6 +134,7 @@ public class AppointmentController {
       @AuthenticationPrincipal MemberDTO owner,
       @RequestBody AppointmentResultDTO result) {
     appointmentService.setParticipantResult(appointmentId, owner.getId(), result);
+    log.info(owner.getId()+"회원이 "+appointmentId+"약속에 대해 결과를 설정하였습니다.");
     return ResponseEntity.ok("약속 결과가 성공적으로 설정되었습니다.");
   }
 }

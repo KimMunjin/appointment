@@ -14,10 +14,12 @@ import com.zerobase.appointment.type.FriendStatus;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FriendService {
 
   private final MemberRepository memberRepository;
@@ -37,6 +39,7 @@ public class FriendService {
     Member beRequestedMember = memberService.findMemberById(beRequestedMemberId);
 
     if (existFriendsData(requestMember, beRequestedMember)) {
+      log.error("친구관계 중복 에러");
       throw new FriendException(ErrorCode.EXISTS_FRIENDSHIP);
     }
     Friend friendRequest = Friend.builder()
@@ -45,8 +48,10 @@ public class FriendService {
         .status(FriendStatus.REQUEST_SENT)
         .build();
     friendRepository.save(friendRequest);
+    log.info(friendRequest.getId() +":Friend save");
 
     notificationService.sendNotification(beRequestedMember.getId(), friendRequest.getId(), AlarmType.FRIEND_REQUEST_ACCEPTED);
+    log.info(beRequestedMember.getId()+"회원에게 알림 발생");
   }
 
   // 친구 테이블에 데이터가 있는지(친구 신청이 있었거나 혹은 친구 사이인지) 확인하는 메서드
@@ -77,6 +82,7 @@ public class FriendService {
         .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
     friendRequest.setStatus(FriendStatus.FRIEND);
     friendRepository.save(friendRequest);
+    log.info(friendRequest.getId()+"친구 신청 수락");
   }
 
   // 친구 신청 거절
@@ -84,7 +90,7 @@ public class FriendService {
     Friend friendRequest = friendRepository.findFriendRequestByIdAndBeRequestedMemberId(
             friendshipId, memberId)
         .orElseThrow(() -> new FriendException(ErrorCode.INVALID_REQUEST));
-
+    log.info(friendRequest.getId()+"친구 신청 거절");
     friendRepository.delete(friendRequest);
   }
 

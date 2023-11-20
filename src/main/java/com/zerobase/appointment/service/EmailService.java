@@ -3,6 +3,7 @@ package com.zerobase.appointment.service;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
 
   private final JavaMailSender emailSender;
@@ -32,8 +34,7 @@ public class EmailService {
       helper.setTo(email);
       helper.setText(htmlContent, true);
     } catch (MessagingException e) {
-      //차후 로그로 변경
-      e.printStackTrace();
+      log.error("이메일 발송 에러 발생");
     }
     emailSender.send(message);
   }

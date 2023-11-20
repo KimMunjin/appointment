@@ -11,6 +11,7 @@ import com.zerobase.appointment.type.Role;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberService implements UserDetailsService {
 
   private final EmailService emailService;
@@ -39,28 +41,31 @@ public class MemberService implements UserDetailsService {
 
     String email = member.getEmail();
     if (this.memberRepository.existsByEmail(email)) {
+      log.error(email+" : 이메일 이용 불가 에러");
       throw new MemberException(ErrorCode.UNAVAILABLE_EMAIL);
     }
     if (this.memberRepository.existsByNickname(member.getNickname())) {
+      log.error(member.getNickname()+" : 닉네임 이용 불가 에러");
       throw new MemberException(ErrorCode.UNAVAILABLE_NICKNAME);
     }
     member.setPassword(this.passwordEncoder.encode(member.getPassword()));
     member.setRole(Role.MEMBER);
     String authCode = generateAuthCode(email);
-    //member.setVerified(false); 마무리 시 주석 풀기
-    member.setVerified(true);//테스트 편의성을 위해서 임시로...
+    member.setVerified(false);
     memberRepository.save(member.toEntity());
-//    emailService.sendVerificationEmail(email, authCode); 이것도 마무리 시 주석 풀기
+    emailService.sendVerificationEmail(email, authCode);
   }
 
   public void resendVerificationEmail(EmailPassword emailPassword) {
     Member member = checkEmailPassword(emailPassword);
     if (member.isVerified()) {
+      log.error(emailPassword.getEmail()+" : 이메일 검증 중복");
       throw new MemberException(ErrorCode.ALREADY_VERIFIED);
     }
     String email = emailPassword.getEmail();
     if (redisRepository.hasKey(email)) {
       if (!isAuthCodeExpired(email)) {
+        log.error(email+" : 해당 이메일 인증코드 중복 에러");
         throw new MemberException(ErrorCode.EXISTS_AUTHCODE);
       }
     }
@@ -81,6 +86,7 @@ public class MemberService implements UserDetailsService {
     Member member = this.memberRepository.findByEmail(email)
         .orElseThrow(() -> new MemberException(ErrorCode.EMAIL_NOT_FOUND));
     if (!authCode.equals(redisRepository.getAuthCode(email))) {
+      log.error(email+" : 해당 이메일 발송 인증코드 이용 불가 에러");
       throw new MemberException(ErrorCode.INVALID_AUTHCODE);
     }
     member.setVerified(true);
@@ -97,6 +103,7 @@ public class MemberService implements UserDetailsService {
   public Member authenticate(EmailPassword emailPassword) {
     Member member = checkEmailPassword(emailPassword);
     if (!member.isVerified()) {
+      log.error(emailPassword.getEmail()+" : 해당 이메일 미인증 에러");
       throw new MemberException(ErrorCode.UNVERIFIED_EMAIL);
     }
     return member;
@@ -106,6 +113,7 @@ public class MemberService implements UserDetailsService {
     Member member = this.memberRepository.findByEmail(emailPassword.getEmail())
         .orElseThrow(() -> new MemberException(ErrorCode.EMAIL_NOT_FOUND));
     if (!this.passwordEncoder.matches(emailPassword.getPassword(), member.getPassword())) {
+      log.error(emailPassword.getEmail()+" : 로그인 실패 에러");
       throw new MemberException(ErrorCode.INVALID_EMAIL_PASSWORD);
     }
     return member;

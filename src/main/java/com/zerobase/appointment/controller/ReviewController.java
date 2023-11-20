@@ -6,6 +6,7 @@ import com.zerobase.appointment.service.ReviewService;
 import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/review")
+@Slf4j
 public class ReviewController {
   private final ReviewService reviewService;
 
@@ -32,6 +34,7 @@ public class ReviewController {
       @AuthenticationPrincipal MemberDTO reviewer) {
     reviewDTO.setReviewerMemberId(reviewer.getId());
     reviewService.writeReview(reviewDTO);
+    log.info(reviewer.getId()+"회원의 "+reviewDTO.getAppointmentId()+"약속에 대한 리뷰 작성");
     return ResponseEntity.ok("리뷰를 작성했습니다.");
   }
 
@@ -40,6 +43,7 @@ public class ReviewController {
   @PreAuthorize("hasRole('MEMBER')")
   public ResponseEntity<List<ReviewDTO>> getReviewsForAppointment(@PathVariable Long appointmentId) {
     List<ReviewDTO> reviews = reviewService.getReviewsForAppointment(appointmentId);
+    log.info(appointmentId+"에 대한 리뷰 리스트 출력");
     return ResponseEntity.ok(reviews);
   }
 
@@ -52,6 +56,7 @@ public class ReviewController {
       @AuthenticationPrincipal MemberDTO reviewer) {
     // 리뷰 서비스를 통해 리뷰를 업데이트합니다.
     reviewService.updateReview(reviewId, updatedReviewDTO, reviewer.getId());
+    log.info(reviewer.getId()+"회원의 "+updatedReviewDTO.getAppointmentId()+"약속에 대한 리뷰 수정");
     return ResponseEntity.ok("리뷰가 성공적으로 수정되었습니다");
   }
 
@@ -60,6 +65,7 @@ public class ReviewController {
   @PreAuthorize("hasRole('MEMBER')")
   public ResponseEntity<String> deleteReview(@PathVariable Long reviewId, @AuthenticationPrincipal MemberDTO reviewer) {
     reviewService.deleteReview(reviewId, reviewer.getId());
+    log.info(reviewer.getId()+"회원의 "+reviewId+"리뷰 삭제");
     return ResponseEntity.ok("리뷰가 성공적으로 삭제되었습니다.");
   }
 

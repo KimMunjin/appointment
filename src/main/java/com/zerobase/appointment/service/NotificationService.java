@@ -10,6 +10,7 @@ import com.zerobase.appointment.type.ErrorCode;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
+@Slf4j
 public class NotificationService {
 
   private final NotificationRepository notificationRepository;
@@ -66,6 +68,7 @@ public class NotificationService {
         .orElseThrow(() -> new AppointmentException(ErrorCode.NOTIFICATION_NOT_FOUND));
     notification.setReadAt(LocalDateTime.now());
     notificationRepository.save(notification);
+    log.info(notification.getId()+" : 알림 확인");
   }
   // 7일 지난 알림 삭제
   @Scheduled(cron = "0 0 0 * * ?")
@@ -76,5 +79,6 @@ public class NotificationService {
     for (Notification notification : oldNotifications) {
       notificationRepository.delete(notification);
     }
+    log.info("deleteOldNotifications 메서드 실행");
   }
 }
