@@ -52,7 +52,8 @@
 
 ## ERD
 
-![Appointment11월18일](https://github.com/KimMunjin/appointment/assets/115455126/7bb5cc8f-a2d1-4969-b5c0-bc524ff871c1)
+
+![Appointment11월20일](https://github.com/KimMunjin/appointment/assets/115455126/f6f0be39-6059-425d-b3c6-a51d5ccb50bd)
 
 
 
